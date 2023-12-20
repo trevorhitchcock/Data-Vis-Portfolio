@@ -1,0 +1,147 @@
+---
+title: "Final Portfolio"
+output:
+  flexdashboard::flex_dashboard:
+    source_code: embed
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(readr)
+require(mosaic)
+require(plotly)
+require(Lock5Data)
+require(statebins)
+require(maps)
+```
+
+Refined Graphs {data-icon="fa-signal"}
+===================================== 
+    
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+soldiers = read.delim("https://raw.githubusercontent.com/JedStephens/Handbook-of-Small-Data-Sets/master/SOLDIERS.DAT", header = F)
+colnames(soldiers) = c("Measurement","Frequency") # for readability
+gf_area(Frequency~ Measurement, data = soldiers, fill = "dark blue") %>% gf_labs(x = "Chest measurement (inches)", y = "# of soldiers", title = "Chest Measurements of Scottish Soldiers", subtitle = "Most are around 40 inches!") %>% gf_theme(theme_light())
+```
+    
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+resting = read.delim("https://raw.githubusercontent.com/JedStephens/Handbook-of-Small-Data-Sets/master/RESTING.DAT", header = F)
+colnames(resting) = c("Height","Resting","Height2","Resting2")
+resting1 = resting %>% dplyr::select(Height,Resting)
+resting2 = resting %>% dplyr::select(Height2,Resting2)
+colnames(resting2) = c("Height","Resting")
+
+new.resting = rbind(resting1,resting2)
+
+gf_point(Resting~Height, data = new.resting) %>% gf_labs(y = "Resting Heart Rate (BPM)", x = "Height (cm)",title = "Taller people have higher resting heart rates!") %>% gf_lm(color = "red", linetype = "dashed") %>% gf_theme(theme_light())
+```
+
+### \n
+
+```{r}
+gf_point(Exercise ~ TV, data = ExerciseHours, color =~ Sex, size = 3) %>% gf_refine(scale_color_manual(values = c("Pink","Blue"))) %>% gf_labs(x = "TV per week (hours)", y = "Exercise per week (hours)", title = "Little correlation between Exercise and TV watched!") %>% gf_theme(theme_light())
+```
+   
+Time Graphs {data-icon="fa-table"}
+=====================================     
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+valueBox("Time Graphs", caption = "Data over time!", color = "orange", icon = "fa-clock")
+```
+
+### \n
+
+```{r}
+marathon_graph = gf_line(Minutes ~ Rank, data = OlympicMarathon2008, color = "red", size = 1.6) %>% gf_labs(x = "Finishing place", y = "Time ran (minutes)", title = "The biggest outliers in the 2008\nMarathon are the winners and losers!") %>% gf_theme(theme_ridges())
+ggplotly(marathon_graph)
+```
+    
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+bike_graph = gf_point(Seconds ~ TopSpeed, data = BikeCommute, color = ~TopSpeed*Seconds, size = 3.5, alpha = .8) %>% gf_labs(x = "Time (seconds)", y = "Top Speed", title = "As a bike ride length increases\nthe top speed decreases", color = "Total\nDistance") %>% gf_refine(scale_color_distiller(palette = "Oranges", direction = 1)) %>% gf_lm(color = "black", linetype = "dashed", size = 1.4) %>% gf_theme(theme_ridges())
+ggplotly(bike_graph)
+```
+
+Maps {data-icon="fa-map"}
+=====================================     
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+
+# world = map_data("world")
+# head(world)
+# head(world.cities)
+# names(world.cities)
+# gf_point(lat ~ long, data = subset(world.cities, country.etc == "France"), alpha = .6, color = "grey") %>% gf_polygon(lat ~ long, data = subset(world, region == "France"), group = ~group, fill = "gray", color = "black", alpha = 0)
+volcano_1 <- read_csv("volcano-1.csv")
+world = map_data("world")
+gf_point(latitude ~ longitude, data = volcano_1, color = "red", alpha = .3, size = ~population_within_10_km) %>% gf_polygon(lat ~ long, data = world, group = ~group, fill = NA, color = "black", size = .3) %>% gf_theme(theme_map) %>% gf_labs(title = "You might not want to live on the coast\nif you're afraid of volcanos!", subtitle = "Especially California, Argentina,\nIndonesia, and Japan", size ="Population within\n10km of volcano")
+```
+
+### \n
+
+```{r}
+valueBox("Maps", caption = "See the world!", color = "Blue", icon = "fa-globe")
+```
+    
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+PoliSciState <- read_csv("PoliSciState.csv")
+statebins(PoliSciState, state_col = "stateid",value = "pot_policy", ggplot2_scale_function = scale_fill_brewer, palette = "BuPu") %>% gf_labs(title ="In the US, Marijuana tends to\nbe legal towards the coasts", fill = "Policy") %>% gf_theme(theme_light())
+```
+
+
+
+Olympic Track and Field Graphs {data-icon="fa-shoe-prints"}
+=====================================     
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+results <- read_csv("results.csv")
+gf_line(as.numeric(Result)~Year | Event, data = subset(results, Event == "100M Men" | Event == "100M Women"),color = ~Medal) %>% gf_labs(y = "Time (seconds)", x = "Year", title = "The 100m dash in the Olympics has gotten faster over the years") + scale_color_manual(values = c("G" = "gold", "S" = "gray60", "B" = "chocolate4")) + gf_theme(theme_light())
+```
+
+
+    
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### \n
+
+```{r}
+gf_bar(~Medal | Nationality, data = results %>% filter(Nationality %in% c("USA", "JAM", "GBR")),fill = ~Medal, color = ~Medal) %>% gf_labs(y = "Medal Count", x = "Medal type", title = "The USA is a powerhouse in Olympic Track and Field") + scale_color_manual(values = c("G" = "gold", "S" = "gray60", "B" = "chocolate4")) + scale_fill_manual(values = c("G" = "gold", "S" = "gray60", "B" = "chocolate4")) + gf_theme(theme_light())
+```
+
+What I've Learned {data-icon="fa-question}
+===================================== 
